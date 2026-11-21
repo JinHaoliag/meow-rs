@@ -31,7 +31,6 @@ use tracing::{debug, info, warn};
 use meow_listener::TunListener;
 
 use crate::log_stream::{parse_log_level, LogMessage};
-use crate::ui;
 use crate::{preinstall_global_route_binding, OutboundBinding, PreinstalledBinding};
 
 struct MaybeWebSocket(Option<WebSocketUpgrade>);

@@ -2569,6 +2569,7 @@ async fn auth_middleware_table() {
             body: None,
             expected: StatusCode::UNAUTHORIZED,
         },
+        Case {
             label: "gated write endpoint rejects unauthenticated POST",
             secret: Some("hunter2"),
             method: "POST",
