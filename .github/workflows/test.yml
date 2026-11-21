@@ -274,7 +274,7 @@ jobs:
         run: |
           export MEOW_TEST_OUTBOUND_INTERFACE="$(ip -4 route get 1.1.1.1 | awk '{for (i=1;i<NF;i++) if ($i=="dev") {print $(i+1); exit}}')"
           test -n "$MEOW_TEST_OUTBOUND_INTERFACE"
-          cargo nextest run --lib --bin meow --bin meow-bench --bin meow-cli \
+          cargo nextest run --lib --bin meow --bin meow-bench \
             --test direct_udp_binding \
             --test common_test \
             --test socks5_udp_user \
@@ -287,7 +287,6 @@ jobs:
             --test statistics_test \
             --test rules_test \
             --test api_test \
-            --test meow_cli_test \
             --test raii_guard_test \
             --test http_connection_close \
             --test config_persistence_test \
@@ -519,13 +518,12 @@ jobs:
         run: |
           export MEOW_TEST_OUTBOUND_INTERFACE="$(powershell.exe -NoProfile -Command '(Find-NetRoute -RemoteIPAddress 1.1.1.1 | Select-Object -First 1).InterfaceAlias' | tr -d '\r')"
           test -n "$MEOW_TEST_OUTBOUND_INTERFACE"
-          cargo nextest run --lib --bin meow --bin meow-bench --bin meow-cli \
+          cargo nextest run --lib --bin meow --bin meow-bench \
             --test direct_udp_binding \
             --test common_test \
             --test config_test \
             --test rules_test \
             --test api_test \
-            --test meow_cli_test \
             --test trojan_integration \
             --test tls_test \
             --test boring_tls_test \
@@ -594,13 +592,12 @@ jobs:
         run: |
           export MEOW_TEST_OUTBOUND_INTERFACE="$(route -n get default | awk '/interface:/ {print $2}')"
           test -n "$MEOW_TEST_OUTBOUND_INTERFACE"
-          cargo nextest run --lib --bin meow --bin meow-bench --bin meow-cli \
+          cargo nextest run --lib --bin meow --bin meow-bench \
             --test direct_udp_binding \
             --test common_test \
             --test config_test \
             --test rules_test \
             --test api_test \
-            --test meow_cli_test \
             --test trojan_integration \
             --test tls_test \
             --test boring_tls_test \

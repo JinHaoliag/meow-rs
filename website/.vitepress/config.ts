@@ -101,7 +101,6 @@ export default defineConfig({
         collapsed: false,
         items: [
           { text: 'CLI & Service', link: '/guide/cli' },
-          { text: 'meow-cli', link: '/guide/meow-cli' },
           { text: 'REST API Reference', link: '/reference/rest-api' },
         ],
       },

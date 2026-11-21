@@ -48,11 +48,6 @@ ech-tls-tunnel = ["ss", "meow-proxy/ech-tls-tunnel"]
 kcptun = ["ss", "mux", "meow-proxy/kcptun"]
 # sing-mux multiplexing (forwarded to meow-proxy; opt-out in `minimal`).
 mux = ["meow-proxy/mux"]
-# Auto-download + unzip a third-party dashboard from `external-ui-url` (issue
-# #223). Off by default: pulls in the `zip` crate, which grows the binary
-# against the ADR-0007 size caps. Even when enabled, the code path is
-# force-disabled on iOS/Android targets (see `src/lib.rs`).
-external-ui-download = ["dep:zip"]
 
 [dependencies]
 meow-common = { workspace = true }
@@ -78,9 +73,6 @@ hickory-proto = { workspace = true }
 smol_str = { workspace = true }
 url = "2"
 httparse = "1"
-# Optional: only compiled when the `external-ui-download` feature is enabled.
-# `deflate` is the only codec GitHub release zips use; skip the heavier ones.
-zip = { version = "9", default-features = false, features = ["deflate"], optional = true }
 dashmap = { workspace = true }
 
 [target.'cfg(unix)'.dependencies]

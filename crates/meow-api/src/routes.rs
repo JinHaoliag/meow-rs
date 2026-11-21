@@ -97,9 +97,6 @@ pub struct AppState {
         Arc<meow_config::proxy_provider_refresh::ProxyProviderRefreshSupervisor>,
     /// Snapshot of active named listeners (read-only, startup-time only in M1).
     pub listeners: Vec<NamedListener>,
-    /// Validated directory for a third-party web UI. When `Some`, it is served
-    /// at `/ui`; when `None`, the built-in panel is served (issue #223).
-    pub external_ui: Option<std::path::PathBuf>,
     /// Shared on-demand traffic sampler. No timer runs until a client
     /// subscribes to `/traffic`.
     pub traffic_feed: TrafficFeed,
@@ -188,7 +185,7 @@ async fn require_auth_ws(
 }
 
 pub fn create_router(state: Arc<AppState>) -> Router {
-    // WS routes — accept header or ?token= query param for browser dashboard compat.
+    // WS routes — accept header or ?token= query param for browser clients.
     // REST API routes gated behind the Bearer middleware (header-only).
     let api = Router::new()
         .route("/", get(hello))
@@ -292,26 +289,10 @@ pub fn create_router(state: Arc<AppState>) -> Router {
             require_auth_ws,
         ));
 
-    // Web UI is intentionally unauthenticated so dashboards can load and then
-    // present a token prompt; this matches upstream mihomo behaviour.
-    //
-    // When `external-ui` is configured (issue #223) the static directory is
-    // served at `/ui` via tower-http's `ServeDir`; otherwise the built-in
-    // single-page panel is served.
-    let router = api;
-    let router = if let Some(dir) = state.external_ui.clone() {
-        // `ServeDir` resolves `index.html` for the directory root and serves
-        // any nested asset; `nest_service("/ui", …)` strips the `/ui` prefix so
-        // both `/ui` and `/ui/<asset>` resolve. Dashboards (metacubexd, yacd)
-        // use hash routing, so no server-side SPA fallback is required.
-        router.nest_service("/ui", tower_http::services::ServeDir::new(dir))
-    } else {
-        router
-            .route("/ui", get(ui::serve_ui))
-            .route("/ui/{*rest}", get(ui::serve_ui))
-    };
-
-    router.layer(CorsLayer::permissive()).with_state(state)
+    // The kernel serves the control API only: no built-in panel, no
+    // `external-ui` hosting. A management UI is a separate application that
+    // talks to this API (see docs/kernel-api-contract.md).
+    api.layer(CorsLayer::permissive()).with_state(state)
 }
 
 // ── Basic endpoints ──────────────────────────────────────────────────
@@ -5255,7 +5236,6 @@ mod outbound_flush_tests {
             rule_provider_refresh: Default::default(),
             proxy_provider_refresh: Default::default(),
             listeners: vec![],
-            external_ui: None,
             traffic_feed: TrafficFeed::default(),
             dns_server: Default::default(),
         })
@@ -5399,7 +5379,6 @@ mod global_route_binding_tests {
             rule_provider_refresh: Default::default(),
             proxy_provider_refresh: Default::default(),
             listeners: vec![],
-            external_ui: None,
             traffic_feed: TrafficFeed::default(),
             dns_server: Default::default(),
         })

@@ -6,8 +6,6 @@
 'require ui';
 
 // Shared helpers for the meow LuCI views. Runtime data comes straight from
-// the meow REST API through authenticated LuCI RPC. The standalone panel
-// uses the HTTP endpoint configured by the UCI panel_port and secret options.
 
 var callServiceList = rpc.declare({
 	object: 'service',
@@ -40,14 +38,6 @@ return baseclass.extend({
 
 	secret: function() {
 		return uci.get('meow', 'main', 'secret') || '';
-	},
-
-	// URL of the built-in web panel; the secret travels in the fragment so it
-	// is never sent to the server (the panel stores it in its localStorage).
-	panelURL: function() {
-		var url = this.apiBase() + '/ui';
-		var secret = this.secret();
-		return secret ? url + '#token=' + encodeURIComponent(secret) : url;
 	},
 
 	api: function(method, path, body) {

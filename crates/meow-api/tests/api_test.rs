@@ -76,7 +76,6 @@ fn test_state_with_backing(raw: RawConfig, config_path: Option<String>) -> Arc<A
         rule_provider_refresh: Default::default(),
         proxy_provider_refresh: Default::default(),
         listeners: vec![],
-        external_ui: None,
         traffic_feed: Default::default(),
         dns_server: Default::default(),
     })
@@ -115,7 +114,6 @@ fn test_state_with_route(raw: RawConfig, named: Vec<(&str, Arc<dyn Proxy>)>) -> 
         rule_provider_refresh: Default::default(),
         proxy_provider_refresh: Default::default(),
         listeners: vec![],
-        external_ui: None,
         traffic_feed: Default::default(),
         dns_server: Default::default(),
     })
@@ -157,7 +155,6 @@ fn test_state_with_secret(secret: &str) -> Arc<AppState> {
         rule_provider_refresh: Default::default(),
         proxy_provider_refresh: Default::default(),
         listeners: vec![],
-        external_ui: None,
         traffic_feed: Default::default(),
         dns_server: Default::default(),
     })
@@ -171,22 +168,6 @@ async fn body_json(resp: axum::response::Response) -> serde_json::Value {
 async fn body_string(resp: axum::response::Response) -> String {
     let bytes = resp.into_body().collect().await.unwrap().to_bytes();
     String::from_utf8(bytes.to_vec()).unwrap()
-}
-
-// ── UI tests ─────────────────────────────────────────────────────
-
-#[tokio::test]
-async fn ui_serves_html() {
-    let state = test_state_default();
-    let app = create_router(state);
-    let resp = app
-        .oneshot(Request::get("/ui").body(axum::body::Body::empty()).unwrap())
-        .await
-        .unwrap();
-    assert_eq!(resp.status(), StatusCode::OK);
-    let body = body_string(resp).await;
-    assert!(body.contains("<!DOCTYPE html>"));
-    assert!(body.contains("meow-rs"));
 }
 
 /// Issue #563: `GET /listeners` discloses the tproxy firewall mode so a
@@ -240,89 +221,6 @@ async fn listeners_endpoint_discloses_tproxy_firewall_mode() {
     assert!(body[1].get("firewall").is_none());
     assert!(body[1].get("udp").is_none());
     assert!(body[1].get("udp-timeout").is_none());
-}
-
-#[tokio::test]
-async fn ui_wildcard_serves_same_html() {
-    let state = test_state_default();
-    let app = create_router(state);
-    let resp = app
-        .oneshot(
-            Request::get("/ui/some/path")
-                .body(axum::body::Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-    assert_eq!(resp.status(), StatusCode::OK);
-    let body = body_string(resp).await;
-    assert!(body.contains("<!DOCTYPE html>"));
-}
-
-// issue #223: when `external-ui` is configured, `/ui` serves the static
-// directory instead of the built-in panel.
-#[tokio::test]
-async fn external_ui_serves_static_directory() {
-    let dir = tempfile::tempdir().unwrap();
-    std::fs::write(
-        dir.path().join("index.html"),
-        "<html><body>third-party dashboard</body></html>",
-    )
-    .unwrap();
-    std::fs::write(dir.path().join("app.js"), "console.log('hi')").unwrap();
-
-    let resolver = Arc::new(Resolver::new(
-        vec!["8.8.8.8:53".parse().unwrap()],
-        vec![],
-        DnsMode::Normal,
-        DomainTrie::new(),
-        true,
-        true,
-    ));
-    let tunnel = Tunnel::new(resolver);
-    let raw = test_raw_config();
-    let meow_config::RebuildResult { proxies, rules, .. } =
-        meow_config::rebuild_from_raw(&raw).unwrap();
-    tunnel.update_proxies(proxies, Default::default());
-    tunnel.update_rules(rules);
-    let state = Arc::new(AppState {
-        tunnel,
-        secret: None,
-        config_path: Some(String::new()),
-        raw_config: Arc::new(RwLock::new(raw)),
-        log_tx: test_log_tx(),
-        proxy_providers: Arc::new(DashMap::new()),
-        provider_dialer_registry: Default::default(),
-        rule_providers: Arc::new(RwLock::new(HashMap::new())),
-        rule_provider_refresh: Default::default(),
-        proxy_provider_refresh: Default::default(),
-        listeners: vec![],
-        external_ui: Some(dir.path().to_path_buf()),
-        traffic_feed: Default::default(),
-        dns_server: Default::default(),
-    });
-    let app = create_router(state);
-
-    // `/ui` resolves index.html in the directory.
-    let resp = app
-        .clone()
-        .oneshot(Request::get("/ui").body(axum::body::Body::empty()).unwrap())
-        .await
-        .unwrap();
-    assert_eq!(resp.status(), StatusCode::OK);
-    assert!(body_string(resp).await.contains("third-party dashboard"));
-
-    // A nested asset is served from the directory.
-    let resp = app
-        .oneshot(
-            Request::get("/ui/app.js")
-                .body(axum::body::Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-    assert_eq!(resp.status(), StatusCode::OK);
-    assert!(body_string(resp).await.contains("console.log"));
 }
 
 // ── Existing endpoint tests ──────────────────────────────────────
@@ -2671,16 +2569,6 @@ async fn auth_middleware_table() {
             body: None,
             expected: StatusCode::UNAUTHORIZED,
         },
-        Case {
-            label: "UI routes remain unauthenticated",
-            secret: Some("hunter2"),
-            method: "GET",
-            path: "/ui",
-            auth: AuthHeader::Absent,
-            body: None,
-            expected: StatusCode::OK,
-        },
-        Case {
             label: "gated write endpoint rejects unauthenticated POST",
             secret: Some("hunter2"),
             method: "POST",
@@ -3066,7 +2954,6 @@ mod delay_support {
             rule_provider_refresh: Default::default(),
             proxy_provider_refresh: Default::default(),
             listeners: vec![],
-            external_ui: None,
             traffic_feed: Default::default(),
             dns_server: Default::default(),
         })
@@ -3124,7 +3011,6 @@ mod delay_support {
             rule_provider_refresh: Default::default(),
             proxy_provider_refresh: Default::default(),
             listeners: vec![],
-            external_ui: None,
             traffic_feed: Default::default(),
             dns_server: Default::default(),
         })
@@ -4502,7 +4388,6 @@ fn test_state_with_hosts_entry() -> Arc<AppState> {
         rule_provider_refresh: Default::default(),
         proxy_provider_refresh: Default::default(),
         listeners: vec![],
-        external_ui: None,
         traffic_feed: Default::default(),
         dns_server: Default::default(),
     })
@@ -4664,7 +4549,6 @@ async fn get_dns_query_txt_relays_upstream_sections_and_flags() {
         rule_provider_refresh: Default::default(),
         proxy_provider_refresh: Default::default(),
         listeners: vec![],
-        external_ui: None,
         traffic_feed: Default::default(),
         dns_server: Default::default(),
     });

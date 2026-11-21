@@ -21,10 +21,6 @@ default = ["full"]
 # Compatibility alias: BoringSSL is the only TLS backend now, so this is a
 # no-op kept for existing `--features boring-tls` invocations.
 boring-tls = []
-# Auto-download a third-party dashboard from `external-ui-url` (issue #223).
-# Off by default — adds the `zip` dependency (ADR-0007 binary-size caps).
-# Force-disabled at compile time on iOS/Android even if enabled.
-external-ui-download = ["meow-config/external-ui-download"]
 # Persistent logbook (ADR-0014): bundles SQLite. In `full`; excluded from
 # `minimal` (ADR-0007 binary-size caps), where `GET /logbook` reports it off.
 logbook = ["meow-common/logbook"]

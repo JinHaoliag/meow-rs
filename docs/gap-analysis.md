@@ -229,7 +229,7 @@ Upstream `hub/route/` mounts these sub-routers, and Clash Dashboard / Yacd expec
 | `POST /upgrade`              | Yes | No  | Gap — low priority |
 | Auth (Bearer `secret`)       | Yes | Yes | OK — enforced on all REST routes when `secret` is non-empty |
 | CORS                         | Yes | Yes | OK (permissive) |
-| `/ui` static                 | Yes | Yes | OK |
+| `/ui` static                 | Yes | No  | **Removed** — the kernel serves the API only |
 
 ### Non-standard endpoints (meow-rs additions)
 
@@ -250,7 +250,7 @@ Upstream config keys documented at https://wiki.metacubex.one/. Checking `crates
 
 ### Supported
 
-`port`, `socks-port`, `mixed-port`, `allow-lan`, `bind-address`, `mode`, `log-level`, `ipv6`, `external-controller`, `secret`, `external-ui` / `external-ui-name` (serves a static third-party dashboard at `/ui`; `external-ui-url` is parsed but auto-download is not performed), `dns`, `proxies`, `proxy-groups`, `rules`, `rule-providers`, `tproxy-port`, `tproxy-sni`, `routing-mark`, and the custom `subscriptions`. Per-outbound `dialer-proxy` (chained dialing via any proxy/group, TCP) is supported on the stream-based outbound types — `ss`, `trojan`, `vless`, `vmess`, `snell`, `http`, `socks5` — where an injected `TcpDialer` carries the adapter's own handshake. `anytls` and `hysteria2` own their transport (QUIC) and do not honour it; nor does `ss` with an external SIP003 plugin. Those fall back to the relay-based wrapper, which fails loudly rather than dialing direct. `dialer-proxy` is honoured on provider-sourced nodes as well (per-node field, provider-level `dialer-proxy`, and `override.dialer-proxy` — mihomo's unconditional-write precedence applies: `override` > provider > node); the target must be a top-level `proxies:`/`proxy-groups:` entry — provider node names are not resolvable targets, same as mihomo. UDP rides the front's own datagram association (Shadowsocks plain relay, SOCKS5 UDP ASSOCIATE), failing closed when the front cannot carry UDP; mux-carried UDP traverses the chain. See [the migration guide](migration-from-go-mihomo.md) for details.
+`port`, `socks-port`, `mixed-port`, `allow-lan`, `bind-address`, `mode`, `log-level`, `ipv6`, `external-controller`, `secret`, `external-ui` / `external-ui-name` / `external-ui-url` (accepted and ignored: static hosting was removed), `dns`, `proxies`, `proxy-groups`, `rules`, `rule-providers`, `tproxy-port`, `tproxy-sni`, `routing-mark`, and the custom `subscriptions`. Per-outbound `dialer-proxy` (chained dialing via any proxy/group, TCP) is supported on the stream-based outbound types — `ss`, `trojan`, `vless`, `vmess`, `snell`, `http`, `socks5` — where an injected `TcpDialer` carries the adapter's own handshake. `anytls` and `hysteria2` own their transport (QUIC) and do not honour it; nor does `ss` with an external SIP003 plugin. Those fall back to the relay-based wrapper, which fails loudly rather than dialing direct. `dialer-proxy` is honoured on provider-sourced nodes as well (per-node field, provider-level `dialer-proxy`, and `override.dialer-proxy` — mihomo's unconditional-write precedence applies: `override` > provider > node); the target must be a top-level `proxies:`/`proxy-groups:` entry — provider node names are not resolvable targets, same as mihomo. UDP rides the front's own datagram association (Shadowsocks plain relay, SOCKS5 UDP ASSOCIATE), failing closed when the front cannot carry UDP; mux-carried UDP traverses the chain. See [the migration guide](migration-from-go-mihomo.md) for details.
 
 ### Missing top-level keys (gaps)
 
@@ -273,7 +273,7 @@ Upstream config keys documented at https://wiki.metacubex.one/. Checking `crates
 | `find-process-mode` | `off` / `strict` / `always` |
 | `tcp-concurrent` | Happy Eyeballs fast-open |
 | `unified-delay` | Delay histogram normalization |
-| `external-ui-url` auto-download | `external-ui` / `external-ui-name` serve a static dir; the zip auto-download is not implemented (avoids an unzip dependency vs. ADR-0007 size caps) |
+| `external-ui-url` auto-download | Removed with `external-ui` hosting: the keys are accepted and ignored |
 | `listeners` | Upstream's generic named-listener list (replaces per-port shortcuts) |
 | `sub-rules` | Named rule subsets referenced from main rules |
 | `proxy-providers` | External proxy lists (http/file) |

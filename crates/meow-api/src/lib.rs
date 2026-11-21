@@ -1,13 +1,15 @@
 //! REST API server (Axum) for the meow-rs proxy kernel.
 //!
 //! Runtime control of proxies, rules, connections, config, traffic, and DNS,
-//! plus the built-in web dashboard.
+//! Runtime control of proxies, rules, connections, config, traffic, and DNS.
+//!
+//! The kernel serves this HTTP/WS surface only: no dashboard and no static
+//! files (`docs/kernel-api-contract.md` in the RClash repo freezes it).
 
 pub mod log_stream;
 mod logbook;
 pub mod routes;
 mod traffic_ledger;
-pub mod ui;
 
 use dashmap::DashMap;
 use log_stream::LogMessage;
@@ -18,10 +20,9 @@ use meow_tunnel::Tunnel;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::broadcast;
-use tracing::{info, warn};
+use tracing::info;
 
 /// How long to wait for the TUN readiness signal (device creation + stack
 /// init + child-task setup) before treating the listener as failed to
@@ -274,7 +275,6 @@ pub struct ApiServer {
     proxy_provider_refresh:
         Arc<meow_config::proxy_provider_refresh::ProxyProviderRefreshSupervisor>,
     listeners: Vec<NamedListener>,
-    external_ui: Option<PathBuf>,
     /// Shared handle the embedder fills once the standalone DNS server is
     /// spawned; `PUT /configs` rebinds or hot-swaps it (issue #514).
     dns_server: Arc<RwLock<Option<routes::DnsServerHandle>>>,
@@ -304,7 +304,6 @@ impl ApiServer {
             meow_config::proxy_provider_refresh::ProxyProviderRefreshSupervisor,
         >,
         listeners: Vec<NamedListener>,
-        external_ui: Option<PathBuf>,
         dns_server: Arc<RwLock<Option<routes::DnsServerHandle>>>,
         provider_dialer_registry: meow_proxy::dialer::ProxyRegistry,
     ) -> Self {
@@ -320,7 +319,6 @@ impl ApiServer {
             rule_provider_refresh,
             proxy_provider_refresh,
             listeners,
-            external_ui,
             dns_server,
             provider_dialer_registry,
         }
@@ -352,7 +350,6 @@ impl ApiServer {
             rule_provider_refresh: Arc::clone(&self.rule_provider_refresh),
             proxy_provider_refresh: Arc::clone(&self.proxy_provider_refresh),
             listeners: self.listeners.clone(),
-            external_ui: self.resolve_external_ui(),
             traffic_feed: Default::default(),
             dns_server: Arc::clone(&self.dns_server),
             provider_dialer_registry: self.provider_dialer_registry.clone(),
@@ -362,25 +359,7 @@ impl ApiServer {
 
         let bound = listener.local_addr().unwrap_or(self.listen_addr);
         info!("REST API listening on {bound}");
-        info!("Web UI available at http://{bound}/ui");
         axum::serve(listener, app).await?;
         Ok(())
-    }
-
-    /// Validate the configured external-UI directory. Returns the path only when
-    /// it exists as a directory; otherwise logs a warning and falls back to the
-    /// built-in panel (issue #223).
-    fn resolve_external_ui(&self) -> Option<PathBuf> {
-        let dir = self.external_ui.as_ref()?;
-        if dir.is_dir() {
-            info!("Serving external Web UI from {}", dir.display());
-            Some(dir.clone())
-        } else {
-            warn!(
-                "external-ui directory {} not found; serving the built-in panel instead",
-                dir.display()
-            );
-            None
-        }
     }
 }

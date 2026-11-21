@@ -40,7 +40,7 @@ pub mod tcp_opts;
 pub mod traffic;
 pub mod traffic_ledger;
 pub mod tunnel_mode;
-// Shared YAML-ingest guard used by meow-config and meow-cli — internal
+// Shared YAML-ingest guard used by the workspace's YAML front-ends — internal
 // plumbing, not part of this published crate's documented API surface.
 #[doc(hidden)]
 pub mod yaml;

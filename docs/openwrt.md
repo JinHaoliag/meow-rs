@@ -136,10 +136,6 @@ not reimplement a dashboard:
   Start/Stop/Restart buttons match the service state and report failures.
   When meow is disabled a banner offers **Enable and start**; when it is
   enabled but stopped, the banner points to the Log.
-- **Panel**: meow's built-in web dashboard (`http://<router>:<panel_port>/ui`)
-  embedded in LuCI, covering proxy selection, subscriptions, groups and
-  rules. The API secret is passed in the URL fragment (`#token=`), so the
-  panel works without typing it again.
 - **Configuration**: raw YAML editor. Edits are validated with `meow -t`
   before they replace the file. Saving explicitly restarts a running service;
   a stopped service stays stopped. Restart failures are reported separately.

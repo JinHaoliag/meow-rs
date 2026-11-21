@@ -2,7 +2,7 @@
 
 meow-rs is a single binary. Day to day you run it with a config path; for unattended
 operation you install it as a system service. To control it while it runs, use
-[meow-cli](./meow-cli).
+its REST API — see the [REST API reference](../reference/rest-api).
 
 ## Command-line flags
 

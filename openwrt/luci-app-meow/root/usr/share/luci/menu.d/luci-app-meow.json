@@ -20,15 +20,6 @@
 		}
 	},
 
-	"admin/services/meow/panel": {
-		"title": "Panel",
-		"order": 20,
-		"action": {
-			"type": "view",
-			"path": "meow/panel"
-		}
-	},
-
 	"admin/services/meow/config": {
 		"title": "Configuration",
 		"order": 30,

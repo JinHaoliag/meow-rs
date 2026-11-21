@@ -25,9 +25,7 @@ Use it as a pre-flight check.
 | `strict` | bool | `false` | Fail on unparseable entries instead of warn-and-skip |
 | `external-controller` | string | — | REST API listen address, e.g. `127.0.0.1:9090` |
 | `secret` | string | — | API bearer-token secret (empty = no auth) |
-| `external-ui` | string | — | Directory of static dashboard files served at `/ui` |
-| `external-ui-name` | string | — | Sub-directory within `external-ui` holding the files |
-| `external-ui-url` | string | — | URL the UI archive can be fetched from (recorded only) |
+| `external-ui`, `external-ui-name`, `external-ui-url` | string | — | Accepted and ignored: the kernel serves no static files (no `/ui`) |
 | `tproxy-sni` | bool | `true` | SNI sniffing on the TProxy listener (deprecated — use `sniffer`) |
 | `routing-mark` | u32 | — | Linux `SO_MARK` for transparent-proxy loop avoidance |
 | `max-connections` | usize | `256` | Global cap on concurrent inbound connections (`0` = unlimited); inherited by the TUN listener |

@@ -56,6 +56,7 @@ provide and are not represented by fake-success stubs:
 | `GET/PUT/DELETE /storage/{key}` | No controller storage database. |
 | `POST /restart` | Process lifecycle belongs to the service manager. |
 | `POST /upgrade`, `/upgrade/ui`, `/upgrade/geo` | No self-updater. |
+| `GET /ui`, `/ui/{*rest}` | No dashboard: the kernel hosts no static files. |
 | Configurable DoH controller route | No external-controller DoH mount. |
 | `/debug/*` | No Go pprof equivalent. |
 

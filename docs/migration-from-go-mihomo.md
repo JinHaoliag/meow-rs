@@ -774,11 +774,9 @@ The following are unsupported or intentionally rejected:
   the release binaries support them.
 - **Snell v1/v2** — hard error; use Snell v3/v4/v5/v6.
 - **`vless` with `flow: xtls-rprx-direct`** — hard error; use `xtls-rprx-vision`.
-- **External dashboard auto-download** (`external-ui-url`) — not performed.
-  `external-ui` / `external-ui-name` *are* supported: point them at a directory
-  of static files and it is served at `/ui` in place of the built-in dashboard.
-  You must download/extract the dashboard yourself; the zip is not fetched
-  automatically (avoids an unzip dependency against the binary-size caps).
+- **Dashboard hosting** (`external-ui`, `external-ui-name`, `external-ui-url`) —
+  removed together with the built-in panel. The keys are still accepted, so a
+  config written for mihomo loads unchanged, but nothing is served at `/ui`.
 - **`dialer-proxy`** — supported for TCP via an injected `TcpDialer`, so the
   outbound's own TLS/Reality/protocol handshake runs on the tunneled stream
   (mihomo's `proxyDialer` model). Chains through any proxy or group and nests,

@@ -66,13 +66,9 @@ ipv6: false
 # REST API
 external-controller: 127.0.0.1:9090
 secret: ""
-# Mount a third-party dashboard (metacubexd, yacd, …) at /ui instead of the
-# built-in panel. Point external-ui at a directory of static files; if the UI
-# lives in a sub-directory, set external-ui-name. Auto-download via
-# external-ui-url is not performed — populate the directory yourself.
-# external-ui: ./ui
-# external-ui-name: dist
-# external-ui-url: https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip
+# `external-ui`, `external-ui-name` and `external-ui-url` are accepted and
+# ignored: the kernel serves the REST API only, never static files. Point a
+# management app at this API instead (there is no `/ui`).
 
 # DNS
 dns:

@@ -56,11 +56,10 @@ jobs:
           # (`full`; TLS is BoringSSL). Targets that cannot link boring-sys
           # (MIPS, windows-gnu) are not shipped and — since the rustls backend
           # was removed — cannot be built with TLS at all.
-          # `desktop: true` targets also ship meow-cli and its agent skill
-          # (skills/meow-cli/) beside meow; armv7 and riscv64, router and
-          # board targets, ship meow alone. x86_64 and aarch64 musl count as
-          # desktop: Linux GUIs that ship meow as their core take the static
-          # musl build.
+          # `desktop: true` targets are the desktop builds: x86_64 and aarch64
+          # musl count as desktop, because Linux GUIs that ship meow as their
+          # core take the static musl build; armv7 and riscv64, router and
+          # board targets, ship meow alone.
           #
           # 32-bit musl used to be on that list too. The blocker is not the
           # 32-bit width itself: musl 1.2.x headers declare time_t as 64-bit
@@ -259,19 +258,6 @@ jobs:
             cargo build --release --locked --target ${{ matrix.target }} --bin meow
           fi
 
-      - name: Build meow-cli
-        if: matrix.desktop
-        shell: bash
-        run: |
-          # A build of its own: meow-cli links none of the engine, and
-          # building it beside `--bin meow` would unify meow's features
-          # into its dependencies.
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            cargo zigbuild --release --locked --target ${{ matrix.target }} -p meow-cli
-          else
-            cargo build --release --locked --target ${{ matrix.target }} -p meow-cli
-          fi
-
       # Runs the produced binary — the `file` assert proves linkage, not
       # that it executes. Legs opt in via `qemu:` (the qemu-user binary
       # name from the qemu-user package; Ubuntu 26.04 dropped
@@ -349,16 +335,7 @@ jobs:
           ref="${{ inputs.ref }}"
           name="meow-${ref}-${{ matrix.target }}"
           staging="dist/${name}"
-          exe=""
-          if [ "${{ runner.os }}" = "Windows" ]; then exe=".exe"; fi
           mkdir -p "${staging}"
-          if [ "${{ matrix.desktop }}" = "true" ]; then
-            # meow-cli, and its agent skill as a folder an agent's skills
-            # directory takes as is.
-            cp "target/${{ matrix.target }}/release/meow-cli${exe}" "${staging}/"
-            mkdir -p "${staging}/skills"
-            cp -R crates/meow-cli/skills/meow-cli "${staging}/skills/"
-          fi
 
           if [ "${{ runner.os }}" = "Windows" ]; then
             cp "target/${{ matrix.target }}/release/meow.exe" "${staging}/"

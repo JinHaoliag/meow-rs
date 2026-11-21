@@ -7,13 +7,6 @@ pub mod auth;
 pub mod dns_parser;
 pub mod dropped_providers;
 pub mod ech_dns;
-// Force-disabled on iOS/Android: mobile apps embed their own UI and must not
-// ship the unzip/download path regardless of the feature flag (issue #223).
-#[cfg(all(
-    feature = "external-ui-download",
-    not(any(target_os = "ios", target_os = "android"))
-))]
-pub mod external_ui;
 pub mod geodata;
 pub mod internal_http;
 pub mod proxy_parser;
@@ -636,13 +629,6 @@ pub struct ListenerConfig {
 pub struct ApiConfig {
     pub external_controller: Option<SocketAddr>,
     pub secret: Option<String>,
-    /// Resolved directory of static files for a third-party web UI, served at
-    /// `/ui` in place of the built-in panel. `None` keeps the built-in panel.
-    /// Already joined with `external-ui-name` when that was set (issue #223).
-    pub external_ui: Option<PathBuf>,
-    /// Download URL recorded from `external-ui-url`; auto-download is not
-    /// performed, but it is surfaced in a warning when the directory is absent.
-    pub external_ui_url: Option<String>,
 }
 
 /// When set, config loading validates structure only and performs no remote
@@ -831,8 +817,8 @@ pub(crate) fn yaml_within_depth(doc: &str) -> bool {
 ///   `yaml_tree` node tree) deserialize recursively, one stack frame per
 ///   nesting level, so the depth bound must trip inside the parser before
 ///   the descend overflows — the value is `meow_common::yaml::MAX_DEPTH`
-///   (32), the single definition meow-cli's config parse shares so every
-///   front-end enforces the same contract.
+///   (32), the single definition every front-end shares so the same
+///   contract holds everywhere.
 ///   The budget is only a real guard because every parse below runs on a
 ///   dedicated `meow_common::yaml::PARSE_STACK_SIZE` thread: on the 1 MiB
 ///   main thread the fatal depth measured ≈25 — *below* 32 — so an inline
@@ -852,9 +838,7 @@ pub(crate) fn yaml_within_depth(doc: &str) -> bool {
 /// `parse_yaml_value` only: the ~90 `serde_saphyr::from_str` call sites
 /// left in this crate's `src/*.rs` all sit inside `#[cfg(test)]` modules
 /// and deliberately pin *direct-path* semantics — the contract reference
-/// the `yaml_tree` deserializer is held to. The single direct use outside
-/// this crate is meow-cli's two-field `ConfigDoc` reader, which mirrors
-/// this option profile by hand.
+/// the `yaml_tree` deserializer is held to.
 fn yaml_options() -> serde_saphyr::Options {
     serde_saphyr::options! {
         strict_booleans: true,
@@ -5019,30 +5003,12 @@ pub async fn build_config(
     let tun = parse_tun_config(raw.tun.as_ref(), raw.max_connections, raw.fake_ip_range())?;
 
     // API config
-    let external_ui = raw
-        .external_ui
-        .as_deref()
-        .filter(|s| !s.is_empty())
-        .map(|base| {
-            let mut dir = PathBuf::from(base);
-            // mihomo nests the actual files under `external-ui-name` when present.
-            if let Some(name) = raw.external_ui_name.as_deref().filter(|s| !s.is_empty()) {
-                dir.push(name);
-            }
-            dir
-        });
     let api = ApiConfig {
         external_controller: parse_optional_socket_addr(
             "external-controller",
             raw.external_controller.as_deref(),
         )?,
         secret: raw.secret.clone(),
-        external_ui,
-        external_ui_url: raw
-            .external_ui_url
-            .as_deref()
-            .filter(|s| !s.is_empty())
-            .map(String::from),
     };
 
     // Sniffer config — also handles deprecated `tproxy_sni` alias.

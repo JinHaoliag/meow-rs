@@ -19,10 +19,6 @@ cargo build --release
 # Test config validity
 ./target/release/meow -f config.yaml -t
 
-# Control the running meow over its REST API (`meow-cli --help`); it finds
-# the meow running as this user through the file meow publishes at startup
-./target/release/meow-cli status
-
 # Run all unit tests
 cargo test --lib
 
@@ -81,7 +77,6 @@ The workspace has 15 crates (see also [ADR-0009](docs/adr/0009-cleanup-scope.md)
 | `meow-config` | YAML configuration parsing into typed structs |
 | `meow-api` | REST API server (Axum) for proxies, rules, connections, configs, traffic, DNS query |
 | `meow-app` | CLI entry point (`main.rs`) — wires config → tunnel → listeners → DNS → API → health checks → subscription refresh |
-| `meow-cli` | `meow-cli` binary: controls a running meow over its REST API (plain HTTP client; of the engine crates it links only `meow-common`, for `controller_file`, the 0600 file meow writes once its `external-controller` is bound and meow-cli reads to find it with no options); ships its agent skill at `skills/meow-cli/SKILL.md`, which the desktop release archives carry as `skills/meow-cli/` (`desktop: true` in `build.yml`). Unpublished: the crates.io name belongs to an unrelated crate |
 | `meow-bench` | Standalone benchmark binary (throughput, latency, connection-rate, DNS, memory, binary-size, config-reload, idle/steady footprint, proxied-outbound via sing-box) |
 
 ### Startup Flow
@@ -192,12 +187,12 @@ cargo test -p meow-proxy --no-default-features --features ss --lib
 # alone is not enough: it skips every `--test` target, so a broken integration
 # test (e.g. the ADR-0001 guard in `crate_invariants_test`) passes locally and
 # lands `main` red.
-cargo test --lib --bin meow --bin meow-bench --bin meow-cli \
+cargo test --lib --bin meow --bin meow-bench \
   --test socks5_udp_user --test ss_listener_integration --test host_validation \
   --test direct_udp_binding \
   --test common_test --test dns_cache_test --test config_test \
   --test tun_config_test --test dialer_proxy_group \
-  --test statistics_test --test rules_test --test api_test --test meow_cli_test \
+  --test statistics_test --test rules_test --test api_test \
   --test raii_guard_test --test http_connection_close \
   --test config_persistence_test --test systemd_config_test \
   --test launchd_config_test \

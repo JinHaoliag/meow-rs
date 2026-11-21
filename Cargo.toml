@@ -15,7 +15,6 @@ members = [
     "crates/meow-config",
     "crates/meow-app",
     "crates/meow-bench",
-    "crates/meow-cli",
 ]
 
 [profile.release]
@@ -129,7 +128,7 @@ hickory-proto = "0.26"
 # Web framework
 axum = { version = "0.8", features = ["ws"] }
 tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "fs"] }
+tower-http = { version = "0.6", features = ["cors"] }
 
 # GeoIP
 maxminddb = { version = "0.27", features = ["mmap"] }

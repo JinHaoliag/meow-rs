@@ -21,11 +21,12 @@ Without `external-controller`, the API does not start. See
 curl -H 'Authorization: Bearer <secret>' http://127.0.0.1:9090/proxies
 ```
 
-## Dashboard
+## No dashboard
 
-A web UI is served at **`/ui`**. By default it's the built-in panel; set
-[`external-ui`](../guide/configuration#top-level-keys) to serve a third-party dashboard's
-static files instead.
+The kernel serves this API only: there is no `/ui` and no static-file hosting.
+A management UI is a separate application (the RClash manager) that talks to
+these endpoints. `external-ui` and `external-ui-name` in a config are accepted
+and ignored, so existing configs keep loading.
 
 ## Meta
 

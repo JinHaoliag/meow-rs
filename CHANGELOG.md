@@ -8,6 +8,21 @@ the canonical, in-repo source a release is cut from.
 
 ## [Unreleased]
 
+### Removed
+
+- **`meow-cli`**: the in-kernel management client is gone — the
+  `crates/meow-cli` crate, the `skills/meow-cli/` agent skill and the
+  `--bin meow-cli` release artifacts. The kernel keeps the HTTP/WS control
+  API only; management UX ships as a separate app (the RClash manager).
+- **The embedded dashboard and `external-ui` hosting**: `GET /ui`,
+  `GET /ui/{*rest}`, `crates/meow-api/static/index.html`, the `ServeDir`
+  mount behind `external-ui`, the `--ext-ui` flag and the
+  `external-ui-download` feature (with its `zip` dependency) are gone. The
+  kernel answers the control API and nothing else.
+  **Compatible on purpose:** a config that still sets `external-ui`,
+  `external-ui-name` or `external-ui-url` keeps loading — the keys are
+  accepted and ignored (`RawConfig` has no `deny_unknown_fields`).
+
 ## [0.29.0] - 2026-11-05
 
 ### Added

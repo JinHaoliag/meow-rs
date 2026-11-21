@@ -280,7 +280,7 @@ API and records nothing.
 ## Follow-ups
 
 - An in-app switch and per-host deletion in the mobile apps.
-- `meow-cli` support.
+- A management client that surfaces the ledger (this repo ships the API only).
 - A row limit on reports (the largest rows and a count of the rest), so
   a month by host stays small for a phone's UI.
 - The standalone `meow` reads the system time zone (UTC today).

@@ -4,7 +4,7 @@
 
 # meow-rs
 
-A high-performance Rust implementation of the [mihomo](https://github.com/MetaCubeX/mihomo) (Clash Meta) proxy kernel. Rule-based tunneling with support for multiple proxy protocols, transparent proxy, DNS snooping, a persistent logbook, a REST API, and a built-in web dashboard.
+A high-performance Rust implementation of the [mihomo](https://github.com/MetaCubeX/mihomo) (Clash Meta) proxy kernel. Rule-based tunneling with support for multiple proxy protocols, transparent proxy, DNS snooping, a persistent logbook, and a REST + WebSocket control API.
 
 Beyond mihomo, meow keeps [`dialer-proxy` chains](#dialer-proxy-chains) working when a member of the dialer group can pass its URL test but not reach the chained server, and keeps a [logbook](#logbook) of what the engine did (reloads, provider failures, crashes, chained nodes going down) that survives restarts.
 
@@ -36,7 +36,7 @@ meow-rs is the engine of the meow apps:
 - **BoringSSL** is the single crypto library for the whole app. Every proxy handshake, health check, DoT/DoH upstream, internal HTTP(S) fetch (uTLS fingerprints and ECH included), and the Hysteria2 QUIC transport link one vendored BoringSSL. rustls is not used at runtime at all
 
 ### Proxy Groups
-- **Selector** -- Manual proxy selection via REST API or web UI
+- **Selector** -- Manual proxy selection via the REST API
 - **URLTest** -- Automatic selection based on latency with tolerance threshold
 - **Fallback** -- Automatic failover to first alive proxy
 - **LoadBalance** -- Round-robin or consistent-hashing distribution
@@ -150,15 +150,13 @@ Intercept local traffic without per-app proxy configuration.
 
 The built-in firewall transparently proxies the **host's own** traffic. To build a **LAN gateway** that forwards and proxies *other* devices' traffic, see [docs/tproxy-gateway.md](docs/tproxy-gateway.md).
 
-### Web Dashboard
+### Control API
 
-Built-in web UI served at `http://<api-addr>/ui` with:
-
-- **Overview** -- Mode selector, listening ports, live traffic stats
-- **Proxies** -- Click-to-switch selector groups, view all proxy group members
-- **Subscriptions** -- Add/refresh/delete Clash YAML subscription URLs (auto-cached to disk)
-- **Proxy Groups** -- Create/edit/delete selector, url-test, fallback groups
-- **Rules** -- Add/delete/reorder rules with drag-and-drop, search/filter
+The kernel ships no UI: it serves the REST + WebSocket control API that
+management applications drive — mode and listeners, live traffic, proxy
+switching, subscriptions, proxy groups, rules, connections and logs. A
+management app is a separate program; see
+[`website/reference/rest-api.md`](website/reference/rest-api.md).
 
 ### Subscription Management
 - Fetch and import Clash YAML subscriptions (proxies, groups, rules)
@@ -208,7 +206,6 @@ Built-in web UI served at `http://<api-addr>/ui` with:
 | `/api/proxy-groups` | GET/POST | List or create proxy groups |
 | `/api/proxy-groups/{name}` | PUT/DELETE | Update or delete proxy group |
 | `/api/proxy-groups/{name}/select` | PUT | Switch selector proxy |
-| `/ui` | GET | Web dashboard |
 
 ### Tunnel
 - Three routing modes: **Rule**, **Global**, **Direct**
@@ -243,7 +240,7 @@ The [#746 throughput follow-up](docs/benchmarks/tcp-throughput-746.md) fixes tra
 ```mermaid
 flowchart TD
     inbound["Inbound listeners<br/>Mixed / HTTP / SOCKS5 / TProxy"] --> tunnel["Tunnel<br/>routing, relay, connection stats"]
-    api["REST API + Web UI<br/>Axum"] --> tunnel
+    api["REST + WS control API<br/>Axum"] --> tunnel
     api --> runtime["Runtime state<br/>config, subscriptions, proxy groups, rules"]
     runtime --> tunnel
     tunnel <--> dns["DNS resolver<br/>cache, fake-IP, policy, snooping"]
@@ -267,7 +264,6 @@ flowchart TD
 | `meow-config` | YAML configuration parsing, subscription fetcher, config persistence |
 | `meow-api` | REST API (Axum) + embedded web UI |
 | `meow-app` | CLI entry point |
-| `meow-cli` | `meow-cli`: controls a running meow over the REST API |
 
 ## Quick Start
 
@@ -399,29 +395,13 @@ compiling. These builds are untested and may break; `meow -v` reports
 `<version>-alpha+<sha7>`. Use the latest stable release for anything
 important.
 
-### Open the Web UI
+### Connect a management client
 
-After starting, open your browser to:
-
-```
-http://127.0.0.1:9090/ui
-```
-
-From the **Subscriptions** tab you can add a Clash subscription URL to import proxies, groups, and rules automatically.
-
-### Control it from the shell
-
-`meow-cli` ships beside `meow` in the desktop release archives (Windows, macOS, Linux on x86_64 and aarch64) and drives the same REST API. On the machine meow runs on, as the same user, it needs no options: once `external-controller` is up, meow writes its address and secret to a file only that user can read, and meow-cli reads it.
-
-```bash
-./target/release/meow-cli status
-./target/release/meow-cli group select "Proxy" "HK 01"
-./target/release/meow-cli conn list --filter youtube
-```
-
-`--controller` and `--config` (which reads `external-controller` and `secret` from a config) point it elsewhere.
-
-`--json` prints the API's answers for scripts. Those archives also carry an agent skill in `skills/meow-cli/` that teaches a coding agent to use it; `meow-cli skill` prints its `SKILL.md`. See the [meow-cli guide](https://meow-rs.github.io/meow-rs/guide/meow-cli).
+The kernel serves only the REST + WebSocket API. A management app talks to
+`http://127.0.0.1:9090` with `Authorization: Bearer <secret>` (or
+`?token=<secret>` on the WebSocket streams); see
+[`website/reference/rest-api.md`](website/reference/rest-api.md). RClash's NSH
+manager is one such app; there is no built-in dashboard and no `/ui`.
 
 ### Use the Proxy
 
@@ -527,23 +507,7 @@ See [`config.example.yaml`](config.example.yaml) for a full annotated example.
 
 ## Testing
 
-Dashboard tests run the shipped HTML in Chromium against an isolated simulated
-controller, covering navigation, editing, authentication, error handling, and
-live traffic. They do not access a running meow instance or real subscriptions.
-The same suite runs in the `dashboard` CI job; failures retain Playwright traces.
 
-```bash
-cd tests/dashboard
-npm ci
-npx playwright install chromium
-npm test
-```
-
-The dependency-free traffic lifecycle regression tests can also run separately:
-
-```bash
-node --test crates/meow-api/tests/ui_test.cjs
-```
 
 ```bash
 # All unit tests

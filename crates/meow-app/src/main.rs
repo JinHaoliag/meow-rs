@@ -60,8 +60,6 @@ struct Args {
     config_string: Option<String>,
 
     /// Override external UI directory
-    #[arg(long = "ext-ui")]
-    ext_ui: Option<String>,
 
     /// Override external controller address
     #[arg(long = "ext-ctl")]
@@ -619,10 +617,6 @@ fn run_application_inner(
                 .map_err(|e| anyhow::anyhow!("--ext-ctl: invalid address '{ctl}': {e}"))?;
             config.api.external_controller = Some(addr);
             info!("External controller overridden by --ext-ctl: {addr}");
-        }
-        if let Some(ref ui) = args.ext_ui {
-            config.api.external_ui = Some(std::path::PathBuf::from(ui));
-            info!("External UI overridden by --ext-ui");
         }
 
         // A declared inbound this build cannot serve must fail startup,
@@ -1506,36 +1500,6 @@ async fn run(
     // (ephemeral) listeners rather than the configured `0`.
     let mut controller_file = None;
     if let Some(api_addr) = config.api.external_controller {
-        // `external-ui-url` auto-download is gated behind the optional
-        // `external-ui-download` feature (it pulls in the `zip` crate, against
-        // the ADR-0007 size caps). Without the feature we just hint the user to
-        // populate the directory manually. See issue #223.
-        if let (Some(url), Some(dir)) = (&config.api.external_ui_url, &config.api.external_ui) {
-            if !dir.is_dir() {
-                // Auto-download is gated behind `external-ui-download` AND is
-                // force-disabled on iOS/Android (mobile ships its own UI).
-                #[cfg(all(
-                    feature = "external-ui-download",
-                    not(any(target_os = "ios", target_os = "android"))
-                ))]
-                {
-                    if let Err(e) = meow_config::external_ui::download_external_ui(url, dir).await {
-                        warn!("failed to download external-ui from {url}: {e:#}");
-                    }
-                }
-                #[cfg(not(all(
-                    feature = "external-ui-download",
-                    not(any(target_os = "ios", target_os = "android"))
-                )))]
-                {
-                    warn!(
-                        "external-ui-url ({url}) is set but auto-download is unavailable in this \
-                         build; download and extract the UI into {} manually",
-                        dir.display()
-                    );
-                }
-            }
-        }
         let api_server = ApiServer::new(
             tunnel.clone(),
             api_addr,
@@ -1548,7 +1512,6 @@ async fn run(
             Arc::clone(&rule_provider_refresh),
             Arc::clone(&proxy_provider_refresh),
             named_listeners.clone(),
-            config.api.external_ui.clone(),
             Arc::clone(&dns_server_handle),
             config.provider_dialer_registry.clone(),
         );
@@ -1678,9 +1641,9 @@ async fn run(
     Ok(())
 }
 
-/// Tell `meow-cli` where this meow's API is, in a file only this user can
-/// read (`meow_common::controller_file`); it stays until the returned
-/// guard drops. Failing costs meow-cli only its lookup without options.
+/// Publish where this meow's API is, in a file only this user can read
+/// (`meow_common::controller_file`); it stays until the returned guard
+/// drops. Failing costs a local client only its lookup without options.
 fn publish_controller(
     socket: &tokio::net::TcpListener,
     secret: Option<&str>,
@@ -1692,7 +1655,7 @@ fn publish_controller(
     match published {
         Ok(published) => published,
         Err(e) => {
-            warn!("cannot publish the external-controller for meow-cli: {e}");
+            warn!("cannot publish the external-controller discovery file: {e}");
             None
         }
     }

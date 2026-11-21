@@ -1,5 +1,5 @@
-//! The controller file: how `meow-cli` finds a running meow without being
-//! told where its API is.
+//! The controller file: how a local client finds a running meow without
+//! being told where its API is.
 //!
 //! Once its `external-controller` is bound, meow writes `<pid>.json` into
 //! [`dir`]: the address a client on this host dials, the API secret and the
@@ -202,7 +202,7 @@ pub fn running_in(dir: &Path) -> Vec<Entry> {
         };
         // Checked on the open file, so nothing can be swapped in after the
         // check: a FIFO would block the read, and only a file this user
-        // owns may point meow-cli at a controller and hand it a secret.
+        // owns may point a client at a controller and hand it a secret.
         if !file.metadata().is_ok_and(|metadata| metadata.is_file()) || !owned_by_this_user(&file) {
             continue;
         }
@@ -328,7 +328,7 @@ fn still_at(_file: &File, _path: &Path) -> bool {
     true
 }
 
-/// Only a file this user owns can point meow-cli at a controller and hand
+/// Only a file this user owns can point a client at a controller and hand
 /// it a secret to send there.
 #[cfg(unix)]
 fn owned_by_this_user(file: &File) -> bool {

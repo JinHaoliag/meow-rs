@@ -23,8 +23,8 @@ Packaging sources for the official OpenWrt `.ipk` and `.apk` release artifacts
   devices you administer only).
 - `luci-app-meow/` — LuCI app: `root/` overlays `/` on the device,
   `htdocs/` maps to `/www`. Overview, config editor, clients, settings and log
-  views talk to the meow REST API and UCI; the Panel tab embeds the built-in
-  web UI served at `/ui` instead of reimplementing a dashboard.
+  views talk to the meow REST API and UCI; the REST API serves no UI of its own,
+  so a dashboard is a separate application (RClash's manager).
 - `docker/side-router.sh` — runs OpenWrt in a Docker container on the LAN
   (macvlan, bridge mode) configured as a side router with meow installed.
 

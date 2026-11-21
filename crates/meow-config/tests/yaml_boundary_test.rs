@@ -370,7 +370,7 @@ hosts:
 }
 
 /// Regression for the production stack overflow (serde-saphyr migration
-/// review, F1): the shipped `meow`/`meow-cli` binaries parse on a 1 MiB
+/// review, F1): the shipped `meow` binary parses on a 1 MiB
 /// main thread already ~350-400 KiB deep in async-poll frames, where the
 /// descend's ≈26 KiB/level debug cost overflows at document depth ≈25 —
 /// *below* the `MAX_DEPTH` budget that exists to trip first. `cargo test`

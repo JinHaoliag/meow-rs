@@ -358,7 +358,7 @@ h2.title{font-family:var(--display);font-weight:700;font-size:clamp(1.7rem,3.4vw
     <div class="rv">
       <span class="eyebrow">One config feeds it all</span>
       <h2>One YAML.<br>Every protocol.</h2>
-      <p class="lede">Bring your existing Clash / mihomo config — meow-rs speaks the same dialect. Point it at a subscription or write rules by hand. It builds the routing table, opens the listeners, and serves a dashboard at <code style="font-family:var(--mono);font-size:.85em">/ui</code>.</p>
+      <p class="lede">Bring your existing Clash / mihomo config — meow-rs speaks the same dialect. Point it at a subscription or write rules by hand. It builds the routing table, opens the listeners, and exposes a REST + WebSocket control API for whatever management app you run.</p>
     </div>
     <div class="code rv" aria-label="Example config.yaml">
       <div class="bar"><i style="background:#FF5C46"></i><i style="background:#FF9E2C"></i><i style="background:#67C29A"></i><span class="fn">config.yaml</span></div>
@@ -393,7 +393,7 @@ h2.title{font-family:var(--display);font-weight:700;font-size:clamp(1.7rem,3.4vw
       <div class="tin rv"><div class="ic">🔭</div><h3>DNS &amp; snooping</h3><p>Built-in UDP resolver with caching, FakeIP, and an IP→domain reverse table to recover hostnames for transparent flows.</p></div>
       <div class="tin rv"><div class="ic">🧶</div><h3>Proxy groups</h3><p>Selector, URL-Test, Fallback, LoadBalance, and Relay groups. Health checks keep dead nodes out of the pick space — it lands on its feet.</p></div>
       <div class="tin rv"><div class="ic">🔒</div><h3>ECH &amp; uTLS</h3><p>Encrypted Client Hello via BoringSSL, DNS-sourced ECH configs, and uTLS fingerprints for Chrome, Firefox, Safari, iOS &amp; more.</p></div>
-      <div class="tin rv"><div class="ic">🖥️</div><h3>Dashboard &amp; REST API</h3><p>Axum-powered API plus a built-in web UI at <code>/ui</code> — switch proxies, edit rules, watch live traffic. Mount your own dashboard too.</p></div>
+      <div class="tin rv"><div class="ic">🖥️</div><h3>REST API, no dashboard</h3><p>Axum-powered REST + WebSocket control API — switch proxies, edit rules, watch live traffic from your own management app. The kernel ships no UI.</p></div>
       <div class="tin rv"><div class="ic">📡</div><h3>Subscriptions</h3><p>Import Clash YAML subscriptions, cache to disk for instant startup, and refresh in the background on a schedule.</p></div>
     </div>
   </div>
@@ -518,9 +518,9 @@ h2.title{font-family:var(--display);font-weight:700;font-size:clamp(1.7rem,3.4vw
       <div class="step rv"><h3>Build</h3><p>Requires Rust 1.89+.</p><pre>cargo build --release</pre></div>
       <div class="step rv"><h3>Configure</h3><p>Copy the example and add your servers.</p><pre>cp config.example.yaml \
    config.yaml</pre></div>
-      <div class="step rv"><h3>Run</h3><p>Start it, then open the dashboard.</p><pre>./target/release/meow \
+      <div class="step rv"><h3>Run</h3><p>Start it, then point a management client at the API.</p><pre>./target/release/meow \
   -f config.yaml
-<span class="c"># → 127.0.0.1:9090/ui</span></pre></div>
+<span class="c"># → control API on 127.0.0.1:9090</span></pre></div>
       <div class="step rv"><h3>Connect</h3><p>Point your tools at the proxy.</p><pre>export https_proxy=\
   http://127.0.0.1:7890
 curl https://ipinfo.io</pre></div>

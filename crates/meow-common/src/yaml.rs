@@ -6,7 +6,7 @@
 //! per level in a debug build (≈6-8 KiB in release). The in-parser depth
 //! budget [`MAX_DEPTH`] exists to trip long before that recursion can
 //! overflow — but it can only do so while the parser's frames still fit on
-//! the *caller's* stack. The shipped `meow`/`meow-cli` binaries parse on a
+//! the *caller's* stack. The shipped `meow` binary parses on a
 //! 1 MiB main thread that is already ~350-400 KiB deep in async-poll
 //! frames, where the fatal depth measures ≈25 — *below* the 32-level
 //! budget, so a deep document turned "config too deep" into a raw
@@ -19,9 +19,9 @@
 //! build profile. Every document ingest point parses through it:
 //! meow-config's `parse_raw_yaml`/`parse_yaml_value` (config file,
 //! `--config-string`, `PUT /configs`, subscription / proxy-provider /
-//! rule-set payloads) and meow-cli's local config read. meow-cli links
-//! only meow-common among the engine crates — the reason these knobs live
-//! here rather than in meow-config.
+//! rule-set payloads). The knobs live in meow-common so every YAML
+//! front-end in the workspace takes the same bounds from one crate instead
+//! of restating them.
 
 /// Nesting-depth budget enforced inside the YAML parser at every ingest
 /// point (the backend's `budget.max_depth` option).
@@ -29,10 +29,9 @@
 /// 32 sits far above any real config (~12 levels is a deep one) yet far
 /// below what a [`PARSE_STACK_SIZE`] stack can descend (~300 levels in a
 /// debug build), so the budget always beats the overflow by a wide margin.
-/// Both YAML front-ends — meow-config's `yaml_options()` and meow-cli's
-/// `parse_config` — must use this exact value: it is the user-facing depth
-/// contract, and a drift between front-ends would let one binary reject a
-/// document the other accepts.
+/// Every YAML front-end must use this exact value: it is the user-facing
+/// depth contract, and a drift between front-ends would let one parser
+/// reject a document another accepts.
 pub const MAX_DEPTH: usize = 32;
 
 /// Stack size for the dedicated parse thread [`run_on_parse_stack`]
